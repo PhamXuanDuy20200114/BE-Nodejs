@@ -1,6 +1,8 @@
 import express from "express";
 import initWebRoutes from "./routes/web";
 import configViewEngine from "./config/viewEngine";
+import connectDB from "./config/connectDB";
+
 require("dotenv").config();
 
 import bodyParser from "body-parser";
@@ -17,6 +19,9 @@ configViewEngine(app);
 
 //init all web routes
 initWebRoutes(app);
+
+//connect to DB
+connectDB();
 
 let PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
