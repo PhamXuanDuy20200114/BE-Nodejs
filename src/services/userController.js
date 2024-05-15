@@ -1,3 +1,4 @@
+import { where } from 'sequelize';
 import db from '../models/index';
 import bcrypt from 'bcryptjs';
 
@@ -39,10 +40,9 @@ let checkUserEmail = async (userEmail) => {
     return new Promise(async (resolve, reject) => {
         try {
             let user = await db.User.findOne({
-                attributes: ['email', 'roleId', 'password'],
+                attributes: ['email', 'roleId', 'password', 'firstName', 'lastName'],
                 where: { email: userEmail }
             })
-            console.log(user);
 
             if (user) {
                 resolve(user);
@@ -87,7 +87,7 @@ let createNewUser = async (data) => {
         try {
             let isEmailExist = await checkEmailExist(data.email);
             if (isEmailExist) {
-                resolve({ errCode: 2, message: 'Your email is already in used. Please try another email' });
+                resolve({ errCode: 1, message: 'Your email is already in used. Please try another email' });
             } else {
                 let hashPassword = await hashUserPassword(data.password);
 
@@ -97,11 +97,11 @@ let createNewUser = async (data) => {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     address: data.address,
-                    phonenumber: data.phonenumber,
-                    gender: data.gender === '1' ? true : false,
-                    roleId: data.roleId,
-                    positionId: data.positionId
-
+                    phonenumber: data.phoneNumber,
+                    gender: data.gender,
+                    roleId: data.role,
+                    positionId: data.position,
+                    image: data.image,
                 });
                 resolve({ errCode: 0, message: "OK" });
 
@@ -144,7 +144,7 @@ let hashUserPassword = (password) => {
 const updateUser = async (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.id) {
+            if (!data.id || !data.role || !data.position || !data.gender) {
                 resolve({ errCode: 1, message: 'Missing required parameter' });
             }
             let user = await db.User.findOne({
@@ -154,7 +154,14 @@ const updateUser = async (data) => {
             if (user) {
                 user.firstName = data.firstName;
                 user.lastName = data.lastName;
+                user.phonenumber = data.phoneNumber;
                 user.address = data.address;
+                user.roleId = data.role;
+                user.positionId = data.position;
+                user.gender = data.gender;
+                if (data.image) {
+                    user.image = data.image;
+                }
                 await user.save();
                 resolve({ errCode: 0, message: 'Update the user success', user });
             } else {
@@ -186,10 +193,32 @@ const deleteUser = async (userId) => {
     });
 }
 
+const getAllCodeService = async (type) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!type) {
+                resolve({ errCode: 1, message: 'Missing required parameter' })
+            } else {
+                let res = {};
+                let allcode = await db.Allcode.findAll({
+                    where: { type: type }
+
+                });
+                res.errCode = 0;
+                res.data = allcode;
+                resolve(res)
+            }
+        } catch (e) {
+            reject(e);
+        }
+    })
+}
+
 module.exports = {
     handlelUserLogin: handlelUserLogin,
     getAllUsers: getAllUsers,
     createNewUser: createNewUser,
     deleteUser: deleteUser,
-    updateUser: updateUser
+    updateUser: updateUser,
+    getAllCodeService: getAllCodeService
 }
