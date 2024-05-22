@@ -1,4 +1,3 @@
-import { where } from 'sequelize';
 import db from '../models/index';
 import bcrypt from 'bcryptjs';
 
@@ -159,6 +158,7 @@ const updateUser = async (data) => {
                 user.roleId = data.role;
                 user.positionId = data.position;
                 user.gender = data.gender;
+                user.updateAt = new Date();
                 if (data.image) {
                     user.image = data.image;
                 }

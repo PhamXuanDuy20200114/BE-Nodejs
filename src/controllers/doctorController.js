@@ -43,9 +43,37 @@ const postInfoDoctor = async (req, res) => {
     }
 }
 
+const getInfoDoctor = async (req, res) => {
+    try {
+        let response = await doctorService.getDetailInfoDoctorById(req.query.id);
+        return res.status(200).json(response);
+    } catch (e) {
+        console.log('error:', e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+
+}
+
+const updateInfoDoctor = async (req, res) => {
+    try {
+        let response = await doctorService.updateDetailInfoDoctor(req.body);
+        return res.status(200).json(response);
+    } catch (e) {
+        console.log('error:', e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+}
 
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
-    postInfoDoctor: postInfoDoctor
+    postInfoDoctor: postInfoDoctor,
+    getInfoDoctor: getInfoDoctor,
+    updateInfoDoctor: updateInfoDoctor
 }
