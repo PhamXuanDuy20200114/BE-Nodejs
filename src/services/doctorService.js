@@ -216,6 +216,12 @@ const getScheduleByDate = (doctorId, date) => {
                         doctorId: doctorId,
                         date: date
                     },
+                    include: [
+                        { model: db.Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
+                    ],
+                    raw: false,
+                    nest: true
+
                 })
                 if (!schedule) {
                     schedule = [];
