@@ -1,7 +1,7 @@
 import { raw } from 'body-parser';
 import db from '../models/index';
 require('dotenv').config();
-import _, { at } from 'lodash';
+import _, { at, includes } from 'lodash';
 
 
 let getTopDoctorHome = (limitInput) => {
@@ -108,7 +108,6 @@ const getDetailInfoDoctorById = (doctorId) => {
                         { model: db.Allcode, as: 'positionData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'genderData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Markdown, as: 'doctorData' },
-                        { model: db.Doctor_info, as: 'doctorInfoData' },
                     ],
                     raw: false,
                     nest: true
@@ -267,6 +266,44 @@ const getScheduleByDate = (doctorId, date) => {
     })
 }
 
+const getExtraInfoDoctorById = (doctorId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!doctorId) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters'
+                })
+            } else {
+                let data = await db.Doctor_info.findOne({
+                    where: { doctorid: doctorId },
+                    attributes: {
+                        exclude: ['id', 'doctorId']
+                    },
+                    include: [
+                        { model: db.Allcode, as: 'priceData', attributes: ['valueVi', 'valueEn'] },
+                        { model: db.Allcode, as: 'provinceData', attributes: ['valueVi', 'valueEn'] },
+                        { model: db.Allcode, as: 'paymentData', attributes: ['valueVi', 'valueEn'] },
+                    ],
+                    raw: false,
+                    nest: true
+                })
+                if (!data) {
+                    data = {};
+                }
+                resolve({
+                    errCode: 0,
+                    data: data
+                })
+            }
+        }
+        catch (e) {
+            console.log('error:', e);
+            reject(e);
+        }
+    })
+}
+
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -274,5 +311,6 @@ module.exports = {
     getDetailInfoDoctorById: getDetailInfoDoctorById,
     updateDetailInfoDoctor: updateDetailInfoDoctor,
     bulkCreateSchedule: bulkCreateSchedule,
-    getScheduleByDate: getScheduleByDate
+    getScheduleByDate: getScheduleByDate,
+    getExtraInfoDoctorById: getExtraInfoDoctorById
 }
