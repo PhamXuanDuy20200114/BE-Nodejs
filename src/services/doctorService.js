@@ -35,7 +35,6 @@ let getTopDoctorHome = (limitInput) => {
 const getAllDoctors = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            console.log('Check here')
             let data = await db.User.findAll({
                 where: { roleId: 'R2' },
                 attributes: {
@@ -56,7 +55,7 @@ const getAllDoctors = () => {
 const saveDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown) {
+            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown || !data.priceId || !data.provinceId || !data.paymentId || !data.addressClinic || !data.clinicName || !data.note) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing required parameters'
@@ -68,6 +67,15 @@ const saveDetailInfoDoctor = (data) => {
                     contentHTML: data.contentHTML,
                     contentMarkdown: data.contentMarkdown,
                     description: data.description ? data.description : '',
+                })
+                await db.Doctor_info.create({
+                    doctorId: data.doctorId,
+                    priceId: data.priceId,
+                    provinceId: data.provinceId,
+                    paymentId: data.paymentId,
+                    addressClinic: data.addressClinic,
+                    clinicName: data.clinicName,
+                    note: data.note,
                 })
                 resolve({
                     errCode: 0,
@@ -99,7 +107,8 @@ const getDetailInfoDoctorById = (doctorId) => {
                     include: [
                         { model: db.Allcode, as: 'positionData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'genderData', attributes: ['valueVi', 'valueEn'] },
-                        { model: db.Markdown, as: 'doctorData' }
+                        { model: db.Markdown, as: 'doctorData' },
+                        { model: db.Doctor_info, as: 'doctorInfoData' },
                     ],
                     raw: false,
                     nest: true
@@ -125,23 +134,42 @@ const getDetailInfoDoctorById = (doctorId) => {
 const updateDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown) {
+            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown ||
+                !data.priceId || !data.provinceId || !data.paymentId || !data.addressClinic ||
+                !data.clinicName || !data.note) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing required parameters'
                 })
             } else {
-                let doctor = await db.Markdown.findOne({
+                let doctorMarkdown = await db.Markdown.findOne({
                     where: {
                         doctorId: data.doctorId
                     },
                     raw: false
                 })
-                doctor.contentHTML = data.contentHTML;
-                doctor.contentMarkdown = data.contentMarkdown;
-                doctor.description = data.description ? data.description : '';
-                doctor.updateAt = new Date();
-                await doctor.save();
+                doctorMarkdown.contentHTML = data.contentHTML;
+                doctorMarkdown.contentMarkdown = data.contentMarkdown;
+                doctorMarkdown.description = data.description ? data.description : '';
+                doctorMarkdown.updateAt = new Date();
+                await doctorMarkdown.save();
+
+                let doctorInfo = await db.Doctor_info.findOne({
+                    where: {
+                        doctorId: data.doctorId
+                    },
+                    raw: false
+                })
+                doctorInfo.priceId = data.priceId;
+                doctorInfo.provinceId = data.provinceId;
+                doctorInfo.paymentId = data.paymentId;
+                doctorInfo.addressClinic = data.addressClinic;
+                doctorInfo.clinicName = data.clinicName;
+                doctorInfo.note = data.note ? data.note : '';
+                doctorInfo.count = data.count;
+                doctorInfo.updateAt = new Date();
+                await doctorInfo.save();
+
                 resolve({
                     errCode: 0,
                     message: 'Update info doctor success'
