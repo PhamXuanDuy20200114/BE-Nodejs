@@ -111,6 +111,21 @@ const getExtraInfoDoctor = async (req, res) => {
     }
 }
 
+const getProfileDoctorById = async (req, res) => {
+    try {
+        let response = await doctorService.getProfileDoctorById(req.query.id);
+        return res.status(200).json(response);
+    }
+    catch (e) {
+        console.log('error:', e);
+        return res.status(200).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+
+}
+
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -119,5 +134,6 @@ module.exports = {
     updateInfoDoctor: updateInfoDoctor,
     bulkCreateSchedule: bulkCreateSchedule,
     getScheduleByDate: getScheduleByDate,
-    getExtraInfoDoctor: getExtraInfoDoctor
+    getExtraInfoDoctor: getExtraInfoDoctor,
+    getProfileDoctorById: getProfileDoctorById
 }
