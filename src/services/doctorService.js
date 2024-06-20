@@ -2,7 +2,19 @@ import { raw } from 'body-parser';
 import db from '../models/index';
 require('dotenv').config();
 import _, { at, includes } from 'lodash';
+import specialty from '../models/specialty';
 
+let checkRequiredFields = (data) => {
+    let arrField = ['doctorId', 'contentHTML', 'contentMarkdown', 'specialtyId', 'priceId', 'provinceId', 'paymentId', 'addressClinic', 'clinicName', 'note'];
+    let check = true;
+    for (let i = 0; i < arrField.length; i++) {
+        if (!data[arrField[i]]) {
+            check = false;
+            break;
+        }
+    }
+    return check;
+}
 
 let getTopDoctorHome = (limitInput) => {
     return new Promise(async (resolve, reject) => {
@@ -55,7 +67,7 @@ const getAllDoctors = () => {
 const saveDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown || !data.priceId || !data.provinceId || !data.paymentId || !data.addressClinic || !data.clinicName || !data.note) {
+            if (!checkRequiredFields(data)) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing required parameters'
@@ -70,6 +82,8 @@ const saveDetailInfoDoctor = (data) => {
                 })
                 await db.Doctor_info.create({
                     doctorId: data.doctorId,
+                    specialtyId: data.specialtyId,
+                    //clinicId: data.clinicId,
                     priceId: data.priceId,
                     provinceId: data.provinceId,
                     paymentId: data.paymentId,
@@ -107,7 +121,9 @@ const getDetailInfoDoctorById = (doctorId) => {
                     include: [
                         { model: db.Allcode, as: 'positionData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'genderData', attributes: ['valueVi', 'valueEn'] },
-                        { model: db.Markdown, as: 'doctorData' },
+                        {
+                            model: db.Markdown, as: 'doctorData'
+                        },
                     ],
                     raw: false,
                     nest: true
@@ -133,9 +149,7 @@ const getDetailInfoDoctorById = (doctorId) => {
 const updateDetailInfoDoctor = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.doctorId || !data.contentHTML || !data.contentMarkdown ||
-                !data.priceId || !data.provinceId || !data.paymentId || !data.addressClinic ||
-                !data.clinicName || !data.note) {
+            if (!checkRequiredFields(data)) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing required parameters'
@@ -159,6 +173,8 @@ const updateDetailInfoDoctor = (data) => {
                     },
                     raw: false
                 })
+                doctorInfo.specialtyId = data.specialtyId;
+                //doctorInfo.clinicId = data.clinicId;
                 doctorInfo.priceId = data.priceId;
                 doctorInfo.provinceId = data.provinceId;
                 doctorInfo.paymentId = data.paymentId;
@@ -277,7 +293,7 @@ const getExtraInfoDoctorById = (doctorId) => {
                 })
             } else {
                 let data = await db.Doctor_info.findOne({
-                    where: { doctorid: doctorId },
+                    where: { doctorId: doctorId },
                     attributes: {
                         exclude: ['id', 'doctorId']
                     },
@@ -285,6 +301,8 @@ const getExtraInfoDoctorById = (doctorId) => {
                         { model: db.Allcode, as: 'priceData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'provinceData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'paymentData', attributes: ['valueVi', 'valueEn'] },
+                        { model: db.Specialty, as: 'specialtyData', attributes: ['name'] },
+                        { model: db.Clinic, as: 'clinicData', attributes: ['name'] },
                     ],
                     raw: false,
                     nest: true
@@ -358,6 +376,58 @@ const getProfileDoctorById = (doctorId) => {
     })
 }
 
+const getTopDoctorBySpecialty = (specialtyId, location) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!specialtyId || !location) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters'
+                })
+            }
+            else {
+                let doctorIdArr = [];
+                if (location === 'ALL') {
+                    let data = await db.Doctor_info.findAll({
+                        where: { specialtyId: specialtyId },
+                        attributes: ['doctorId'],
+                        raw: true
+                    })
+                    if (data && data.length > 0) {
+                        for (let i = 0; i < data.length; i++) {
+                            doctorIdArr.push(data[i].doctorId);
+                        }
+                    }
+
+                } else {
+                    let data = await db.Doctor_info.findAll({
+                        where: {
+                            specialtyId: specialtyId,
+                            provinceId: location
+                        },
+                        attributes: ['doctorId'],
+                        raw: true
+                    })
+                    if (data && data.length > 0) {
+                        for (let i = 0; i < data.length; i++) {
+                            doctorIdArr.push(data[i].doctorId);
+                        }
+                    }
+                }
+
+                resolve({
+                    errCode: 0,
+                    data: doctorIdArr
+                })
+            }
+        }
+        catch (e) {
+            console.log('error:', e);
+            reject(e);
+        }
+    })
+}
+
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -367,5 +437,6 @@ module.exports = {
     bulkCreateSchedule: bulkCreateSchedule,
     getScheduleByDate: getScheduleByDate,
     getExtraInfoDoctorById: getExtraInfoDoctorById,
-    getProfileDoctorById: getProfileDoctorById
+    getProfileDoctorById: getProfileDoctorById,
+    getTopDoctorBySpecialty: getTopDoctorBySpecialty
 }
