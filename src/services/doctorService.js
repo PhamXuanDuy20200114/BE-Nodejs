@@ -5,7 +5,7 @@ import _, { at, includes } from 'lodash';
 import specialty from '../models/specialty';
 
 let checkRequiredFields = (data) => {
-    let arrField = ['doctorId', 'contentHTML', 'contentMarkdown', 'specialtyId', 'priceId', 'provinceId', 'paymentId', 'addressClinic', 'clinicName', 'note'];
+    let arrField = ['doctorId', 'contentHTML', 'contentMarkdown', 'specialtyId', 'clinicId`', 'priceId', 'provinceId', 'paymentId', 'note'];
     let check = true;
     for (let i = 0; i < arrField.length; i++) {
         if (!data[arrField[i]]) {
@@ -83,12 +83,10 @@ const saveDetailInfoDoctor = (data) => {
                 await db.Doctor_info.create({
                     doctorId: data.doctorId,
                     specialtyId: data.specialtyId,
-                    //clinicId: data.clinicId,
+                    clinicId: data.clinicId,
                     priceId: data.priceId,
                     provinceId: data.provinceId,
                     paymentId: data.paymentId,
-                    addressClinic: data.addressClinic,
-                    clinicName: data.clinicName,
                     note: data.note,
                 })
                 resolve({
@@ -123,7 +121,7 @@ const getDetailInfoDoctorById = (doctorId) => {
                         { model: db.Allcode, as: 'genderData', attributes: ['valueVi', 'valueEn'] },
                         {
                             model: db.Markdown, as: 'doctorData'
-                        },
+                        }
                     ],
                     raw: false,
                     nest: true
@@ -174,14 +172,12 @@ const updateDetailInfoDoctor = (data) => {
                     raw: false
                 })
                 doctorInfo.specialtyId = data.specialtyId;
-                //doctorInfo.clinicId = data.clinicId;
+                doctorInfo.clinicId = data.clinicId;
                 doctorInfo.priceId = data.priceId;
                 doctorInfo.provinceId = data.provinceId;
                 doctorInfo.paymentId = data.paymentId;
-                doctorInfo.addressClinic = data.addressClinic;
-                doctorInfo.clinicName = data.clinicName;
                 doctorInfo.note = data.note ? data.note : '';
-                doctorInfo.count = data.count;
+                doctorInfo.count = data.count ? data.count : 0;
                 doctorInfo.updateAt = new Date();
                 await doctorInfo.save();
 
@@ -302,7 +298,7 @@ const getExtraInfoDoctorById = (doctorId) => {
                         { model: db.Allcode, as: 'provinceData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Allcode, as: 'paymentData', attributes: ['valueVi', 'valueEn'] },
                         { model: db.Specialty, as: 'specialtyData', attributes: ['name'] },
-                        { model: db.Clinic, as: 'clinicData', attributes: ['name'] },
+                        { model: db.Clinic, as: 'clinicData', attributes: ['name', 'address'] },
                     ],
                     raw: false,
                     nest: true
@@ -428,6 +424,40 @@ const getTopDoctorBySpecialty = (specialtyId, location) => {
     })
 }
 
+const getTopDoctorByClinic = (clinicId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!clinicId) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters'
+                })
+            }
+            else {
+                let data = await db.Doctor_info.findAll({
+                    where: { clinicId: clinicId },
+                    attributes: ['doctorId'],
+                    raw: true
+                })
+                let doctorIdArr = [];
+                if (data && data.length > 0) {
+                    for (let i = 0; i < data.length; i++) {
+                        doctorIdArr.push(data[i].doctorId);
+                    }
+                }
+                resolve({
+                    errCode: 0,
+                    data: doctorIdArr
+                })
+            }
+        }
+        catch (e) {
+            console.log('error:', e);
+            reject(e);
+        }
+    })
+}
+
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -438,5 +468,6 @@ module.exports = {
     getScheduleByDate: getScheduleByDate,
     getExtraInfoDoctorById: getExtraInfoDoctorById,
     getProfileDoctorById: getProfileDoctorById,
-    getTopDoctorBySpecialty: getTopDoctorBySpecialty
+    getTopDoctorBySpecialty: getTopDoctorBySpecialty,
+    getTopDoctorByClinic: getTopDoctorByClinic
 }

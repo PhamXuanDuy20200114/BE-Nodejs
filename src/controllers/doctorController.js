@@ -139,6 +139,20 @@ const getTopDoctorBySpecialty = async (req, res) => {
         });
     }
 }
+
+const getTopDoctorByClinic = async (req, res) => {
+    try {
+        let data = await doctorService.getTopDoctorByClinic(req.query.id);
+        return res.status(200).json(data);
+    }
+    catch (e) {
+        console.log('error: ', e);
+        return res.status(500).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+}
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -149,5 +163,6 @@ module.exports = {
     getScheduleByDate: getScheduleByDate,
     getExtraInfoDoctor: getExtraInfoDoctor,
     getProfileDoctorById: getProfileDoctorById,
-    getTopDoctorBySpecialty: getTopDoctorBySpecialty
+    getTopDoctorBySpecialty: getTopDoctorBySpecialty,
+    getTopDoctorByClinic: getTopDoctorByClinic
 }
