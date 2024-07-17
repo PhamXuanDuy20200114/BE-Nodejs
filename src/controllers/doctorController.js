@@ -153,6 +153,21 @@ const getTopDoctorByClinic = async (req, res) => {
         });
     }
 }
+
+const sendRemedy = async (req, res) => {
+    try {
+        let data = req.body;
+        let response = await doctorService.sendRemedy(data);
+        return res.status(200).json(response);
+    }
+    catch (e) {
+        console.log('error: ', e);
+        return res.status(500).json({
+            errCode: -1,
+            message: 'Error from server'
+        });
+    }
+}
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -164,5 +179,6 @@ module.exports = {
     getExtraInfoDoctor: getExtraInfoDoctor,
     getProfileDoctorById: getProfileDoctorById,
     getTopDoctorBySpecialty: getTopDoctorBySpecialty,
-    getTopDoctorByClinic: getTopDoctorByClinic
+    getTopDoctorByClinic: getTopDoctorByClinic,
+    sendRemedy: sendRemedy
 }

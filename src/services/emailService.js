@@ -16,12 +16,12 @@ let sendSimpleEmail = async (dataSend) => {
         from: '"Đại ka Gấu Gấu 👻" <maddison53@ethereal.email>', // sender address
         to: dataSend.reciverEmail, // list of receivers
         subject: "Thông tin đặt lịch khám bệnh", // Subject line
-        html: getBodayEmail(dataSend.language, dataSend), // html body
+        html: getBodyEmail(dataSend.language, dataSend), // html body
     });
 
 }
 
-const getBodayEmail = (language, dataSend) => {
+const getBodyEmail = (language, dataSend) => {
     if (language === 'vi') {
         return `
         <h3>Xin chào ${dataSend.patientName}!</h3>
@@ -48,7 +48,52 @@ const getBodayEmail = (language, dataSend) => {
         `
 }
 
+const sendAttachment = async (dataSend) => {
+    const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // Use `true` for port 465, `false` for all other ports
+        auth: {
+            user: process.env.EMAIL_APP,
+            pass: process.env.EMAIL_APP_PASSWORD,
+        },
+    });
+
+    const info = await transporter.sendMail({
+        from: '"Đại ka Gấu Gấu 👻" <maddison53@ethereal.email>', // sender address
+        to: dataSend.email, // list of receivers
+        subject: "Kết quả đặt lịch khám bệnh", // Subject line
+        html: getBodyEmailRemedy(dataSend.language, dataSend), // html body
+        attachments: [
+            {
+                filename: 'remedy.pdf',
+                content: dataSend.imageBase64.split('base64,')[1],
+                encoding: 'base64',
+            }]
+    });
+
+}
+
+const getBodyEmailRemedy = (language, dataSend) => {
+    if (language === 'vi') {
+        return `
+        <h3>Xin chào ${dataSend.patientName}!</h3>
+        <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Đại ka Gấu Gấu thành công.</p>
+        <p>Thông tin đơn thuốc/hóa đơn được gửi trong file đính kèm.</p>
+        <p>Trân trọng cảm ơn!</p>
+        `
+    } else {
+        return `
+        <h3>Dear ${dataSend.patientName}!</h3>
+        <p>You are receiving this email because you have successfully booked an online medical examination appointment on Dai ka Gau Gau.</p>
+        <p>Prescription/invoice information is sent in the attached file.</p>
+        <p>Thank you very much!</p>
+        `
+    }
+}
+
 
 module.exports = {
-    sendSimpleEmail
+    sendSimpleEmail,
+    sendAttachment
 }

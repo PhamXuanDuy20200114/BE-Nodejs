@@ -3,9 +3,10 @@ import db from '../models/index';
 require('dotenv').config();
 import _, { at, includes } from 'lodash';
 import specialty from '../models/specialty';
+import { sendAttachment } from './emailService';
 
 let checkRequiredFields = (data) => {
-    let arrField = ['doctorId', 'contentHTML', 'contentMarkdown', 'specialtyId', 'clinicId`', 'priceId', 'provinceId', 'paymentId', 'note'];
+    let arrField = ['doctorId', 'contentHTML', 'contentMarkdown', 'specialtyId', 'clinicId', 'priceId', 'provinceId', 'paymentId', 'note'];
     let check = true;
     for (let i = 0; i < arrField.length; i++) {
         if (!data[arrField[i]]) {
@@ -458,6 +459,48 @@ const getTopDoctorByClinic = (clinicId) => {
     })
 }
 
+const sendRemedy = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!data || !data.doctorId || !data.patientId || !data.email) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters'
+                })
+            }
+            else {
+                //update booking status
+                let booking = await db.Booking.findOne({
+                    where: {
+                        doctorId: data.doctorId,
+                        patientId: data.patientId,
+                        statusId: 'S2'
+                    },
+                    raw: false
+                })
+                if (!booking) {
+                    resolve({
+                        errCode: 2,
+                        errMessage: 'Booking not found'
+                    })
+                }
+                booking.statusId = 'S3';
+                await booking.save();
+                //send email remedy
+                await sendAttachment(data);
+                resolve({
+                    errCode: 0,
+                    message: 'Send remedy success'
+                })
+            }
+        }
+        catch (e) {
+            console.log('error:', e);
+            reject(e);
+        }
+    })
+
+}
 module.exports = {
     getTopDoctorHome: getTopDoctorHome,
     getAllDoctors: getAllDoctors,
@@ -469,5 +512,6 @@ module.exports = {
     getExtraInfoDoctorById: getExtraInfoDoctorById,
     getProfileDoctorById: getProfileDoctorById,
     getTopDoctorBySpecialty: getTopDoctorBySpecialty,
-    getTopDoctorByClinic: getTopDoctorByClinic
+    getTopDoctorByClinic: getTopDoctorByClinic,
+    sendRemedy: sendRemedy
 }
